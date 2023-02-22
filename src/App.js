@@ -1,5 +1,6 @@
-import './App.css';
 import { randomInterval } from './index.js'
+
+import './App.css';
 
 
 
