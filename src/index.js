@@ -1,9 +1,10 @@
-import {React, useState} from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
 import reportWebVitals from './reportWebVitals';
 import './App.css';
+import random from 'random';
 
 
 
@@ -38,46 +39,130 @@ sound.addEventListener("loadeddata", () => {
     
 
 
-function randomInterval(logs) {
+function randomGaussianInterval(logs) {
     let interval_duration = randomNormal(random_config)
     
-    setTimeout(alarm,
+    setTimeout(alarmGaussian,
 	       interval_duration * 1000, // argument is in ms
 	       interval_duration,
 	       logs)
 }
 
 
-function alarm(interval_duration, logs) {
+function alarmGaussian(interval_duration, logs) {
     console.log(`It has been ${interval_duration} secs. Now playing alarm`);
 
-    console.log(logs)
-    const [old_array, setLogs] = logs;
-    const new_array = [...old_array, interval_duration]
+    const [getLogs, setLogs] = logs;
+    const new_array = [...getLogs(), interval_duration]
 
     setLogs(new_array);
     
     sound.play();
 
     setTimeout(() => { end_of_pause.play()
-		       randomInterval([new_array, setLogs]) }, 10 * 1000)
+		       randomGaussianInterval(logs) }, 10 * 1000)
+}
+
+function distribution(random, number_of_intervals) {
+    let index = 0
+    let dist = []
+
+    while (index < number_of_intervals) {
+	const value = random()
+
+	dist.push(value)
+	index++
+    }
+
+    return dist
+}
+
+function compare(a, b) {
+    return a - b
 }
 
 
-function App() {
-    const [started, setStarted] = useState(false)
-    const [logs, setLogs] = useState([]);
+var lastTimeout = window.performance.now()
 
-    return (
-    <div className="App">
-	<button id="The button" onClick={() => { if (!started) { randomInterval([logs, setLogs]);  setStarted(true) }}} size="100px">Click me for alarm </button>
-	{
-	    logs.map((duration, index) => {
-		return <p key={index}>Interval of {duration} was played</p>
-	    }).reverse()
-	}
-    </div>
-  );
+function alarm(interval_duration, logs) {
+    const [getLogs, setLogs] = logs;
+    const new_array = [...getLogs(), interval_duration]
+    const t = window.performance.now()
+    
+    setLogs(new_array);
+
+    console.log(`It's been ${t - lastTimeout}. Now playing alarm`)
+
+    lastTimeout = t
+    
+    sound.play();
+    setTimeout(() => {
+	end_of_pause.play()
+    }, 10 * 1000)
+
+}
+
+function randomUniformInterval(logs, number_of_intervals) {
+    let interval_distribution = distribution(random.uniform(0.0, 3600.0), number_of_intervals).sort(compare)
+
+    for (const interval of interval_distribution) {
+	console.log(`Setting up timeout in ${interval}s`)
+	setTimeout(() => alarm(interval, logs), interval * 1000)
+    }
+
+    setTimeout(() => {
+	randomUniformInterval(logs, number_of_intervals)
+    }, 3600 * 1000)
+}
+
+class App extends React.Component {
+    state = {
+	logs: [],
+	started: false,
+    }
+    
+    constructor(props) {
+	super(props)
+
+	this.getLogs = this.getLogs.bind(this)
+	this.setLogs = this.setLogs.bind(this)
+	this.setStarted = this.setStarted.bind(this)
+    }
+
+    setStarted() {
+	this.setState({
+	    started: true
+	})
+    }
+    
+    getLogs() {
+	return this.state.logs
+    }
+
+    setLogs(logs) {
+	this.setState({
+	    logs
+	})
+    }
+
+    render() {
+	const started = this.state.started
+	const logs = this.getLogs()
+	
+	return (
+	    <div className="App">
+		<button id="The uniform button" onClick={() => { if (!started) { randomUniformInterval([this.getLogs, this.setLogs], 30);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Uniform </button>
+		<button id="The gaussian button" onClick={() => { if (!started) { randomGaussianInterval([this.getLogs, this.setLogs]);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Gaussian </button>
+		{
+		    logs.map((duration, index) => {
+			return <p key={index}>Interval of {duration} was played</p>
+		    }).reverse()
+		}
+
+		
+	    </div>
+	);
+    }
 }
 
 
@@ -88,5 +173,5 @@ function App() {
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
-export { sound, randomInterval };
+export { sound, randomGaussianInterval };
 
