@@ -86,14 +86,19 @@ var lastTimeout = window.performance.now()
 
 function alarm(interval_duration, logs) {
     const [getLogs, setLogs] = logs;
-    const new_array = [...getLogs(), interval_duration]
     const t = window.performance.now()
+
+    const delta_t = (t - lastTimeout) / 1000
+    
+    console.log(`It's been ${delta_t}s. Now playing alarm`)
+
+    lastTimeout = t
+    
+    const new_array = [...getLogs(), delta_t]
     
     setLogs(new_array);
 
-    console.log(`It's been ${t - lastTimeout}. Now playing alarm`)
 
-    lastTimeout = t
     
     sound.play();
     setTimeout(() => {
