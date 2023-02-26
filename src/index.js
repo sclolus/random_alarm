@@ -107,8 +107,8 @@ function alarm(interval_duration, logs) {
 
 }
 
-const canvas = document.getElementById("canvas");
-const context = canvas.getContext("2d")
+var canvas 
+var context
 
 function updateProgress(startTime) {
     const in_secs = startTime / 1000
@@ -129,6 +129,8 @@ function updateProgress(startTime) {
 }
 
 function randomUniformInterval(logs, number_of_intervals) {
+    canvas = document.getElementById("canvas");    
+    context = canvas.getContext("2d")
     context.reset()
     
     let interval_distribution = distribution(random.uniform(0.0, 3600.0), number_of_intervals).sort(compare)
@@ -164,6 +166,7 @@ class App extends React.Component {
     state = {
 	logs: [],
 	started: false,
+	canvas: true,
     }
     
     constructor(props) {
@@ -172,6 +175,7 @@ class App extends React.Component {
 	this.getLogs = this.getLogs.bind(this)
 	this.setLogs = this.setLogs.bind(this)
 	this.setStarted = this.setStarted.bind(this)
+	this.toggleCanvas = this.toggleCanvas.bind(this)
     }
 
     setStarted() {
@@ -190,22 +194,30 @@ class App extends React.Component {
 	})
     }
 
+    toggleCanvas() {
+	this.setState({
+	    canvas: !this.state.canvas
+	})
+	canvas.hidden = this.state.canvas
+    }
+
     render() {
 	const started = this.state.started
 	const logs = this.getLogs()
 
 	return (
 	    <div>
-
+		<button onClick={this.toggleCanvas}> Toggle canvas</button>
+		
 		<button id="The uniform button" onClick={() => { if (!started) { randomUniformInterval([this.getLogs, this.setLogs], 30);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Uniform </button>
 		<button id="The gaussian button" onClick={() => { if (!started) { randomGaussianInterval([this.getLogs, this.setLogs]);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Gaussian </button>
+		<canvas id="canvas" height="30px" width="1000vw"> </canvas>
 		{
 		    logs.map((duration, index) => {
 			return <p key={index}>Interval of {duration} was played</p>
 		    }).reverse()
 		}
 
-		
 	    </div>
 	);
     }
