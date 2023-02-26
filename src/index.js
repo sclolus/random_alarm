@@ -107,13 +107,53 @@ function alarm(interval_duration, logs) {
 
 }
 
+const canvas = document.getElementById("canvas");
+const context = canvas.getContext("2d")
+
+function updateProgress(startTime) {
+    const in_secs = startTime / 1000
+
+    if (in_secs >= 3600)
+	return ;
+
+    const now = window.performance.now() / 1000
+
+    const delta_t = now - in_secs
+    context.fillStyle = "green"
+    
+    const x = delta_t / 3600 * 1000
+    context.fillRect(x, 0, 2, 10);
+
+    setTimeout(() => { updateProgress(startTime) }, 1000)
+    
+}
+
 function randomUniformInterval(logs, number_of_intervals) {
+    context.reset()
+    
     let interval_distribution = distribution(random.uniform(0.0, 3600.0), number_of_intervals).sort(compare)
+
+    context.fillRect(0, 0, 1000, 2);
+
+    
+    
+    
+    // canvas.clear()
+    context.fillStyle = "red"
 
     for (const interval of interval_distribution) {
 	console.log(`Setting up timeout in ${interval}s`)
+
+	const x = interval / 3600 * 1000
+	context.fillRect(x, 0, 2, 10);
+	
 	setTimeout(() => alarm(interval, logs), interval * 1000)
     }
+
+    const t0 = window.performance.now()
+
+    setTimeout(() => { updateProgress(t0) }, 0)
+
 
     setTimeout(() => {
 	randomUniformInterval(logs, number_of_intervals)
@@ -153,9 +193,10 @@ class App extends React.Component {
     render() {
 	const started = this.state.started
 	const logs = this.getLogs()
-	
+
 	return (
-	    <div className="App">
+	    <div>
+
 		<button id="The uniform button" onClick={() => { if (!started) { randomUniformInterval([this.getLogs, this.setLogs], 30);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Uniform </button>
 		<button id="The gaussian button" onClick={() => { if (!started) { randomGaussianInterval([this.getLogs, this.setLogs]);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Gaussian </button>
 		{
