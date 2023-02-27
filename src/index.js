@@ -112,20 +112,19 @@ var context
 
 function updateProgress(startTime) {
     const in_secs = startTime / 1000
-
-    if (in_secs >= 3600)
+    const now = window.performance.now() / 1000
+    const delta_t = now - in_secs
+    
+    if (delta_t >= 3600)
 	return ;
 
-    const now = window.performance.now() / 1000
 
-    const delta_t = now - in_secs
-    context.fillStyle = "green"
-    
     const x = delta_t / 3600 * 1000
+    
+    context.fillStyle = "green"
     context.fillRect(x, 0, 2, 10);
 
     setTimeout(() => { updateProgress(startTime) }, 1000)
-    
 }
 
 function randomUniformInterval(logs, number_of_intervals) {
