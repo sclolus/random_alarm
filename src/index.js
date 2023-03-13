@@ -17,10 +17,6 @@ const sound = new Audio("/media/ping.mp3");
 var end_of_pause
 
 
-const random_config = {
-    mean: 120, //secs
-    dev: 90, //secs
-}
 
 sound.addEventListener("loadeddata", () => {
     end_of_pause = new Audio("/media/end-of-pause.mp3");
@@ -39,17 +35,23 @@ sound.addEventListener("loadeddata", () => {
     
 
 
-function randomGaussianInterval(logs) {
+function randomGaussianInterval(logs, intervalNumber) {
+
+    const random_config = {
+	mean: 3600 / intervalNumber, //secs
+	dev: 90, //secs
+    }
     let interval_duration = randomNormal(random_config)
     
     setTimeout(alarmGaussian,
 	       interval_duration * 1000, // argument is in ms
 	       interval_duration,
-	       logs)
+	       logs,
+	      intervalNumber)
 }
 
 
-function alarmGaussian(interval_duration, logs) {
+function alarmGaussian(interval_duration, logs, intervalNumber) {
     console.log(`It has been ${interval_duration} secs. Now playing alarm`);
 
     const [getLogs, setLogs] = logs;
@@ -60,7 +62,7 @@ function alarmGaussian(interval_duration, logs) {
     sound.play();
 
     setTimeout(() => { end_of_pause.play()
-		       randomGaussianInterval(logs) }, 10 * 1000)
+		       randomGaussianInterval(logs) }, 10 * 1000, intervalNumber)
 }
 
 function distribution(random, number_of_intervals) {
@@ -166,6 +168,7 @@ class App extends React.Component {
 	logs: [],
 	started: false,
 	canvas: true,
+	intervalNumber: 30,
     }
     
     constructor(props) {
@@ -175,6 +178,7 @@ class App extends React.Component {
 	this.setLogs = this.setLogs.bind(this)
 	this.setStarted = this.setStarted.bind(this)
 	this.toggleCanvas = this.toggleCanvas.bind(this)
+	this.handleChange = this.handleChange.bind(this)
     }
 
     setStarted() {
@@ -200,16 +204,31 @@ class App extends React.Component {
 	canvas.hidden = this.state.canvas
     }
 
+    handleChange(event) {
+	let value = parseInt(event.target.value)
+
+	if (isNaN(value))
+	    value = 0
+
+
+	this.setState({
+	    intervalNumber: value
+	})
+    }
+
     render() {
 	const started = this.state.started
 	const logs = this.getLogs()
+
+	const intervalNumber = this.state.intervalNumber
 
 	return (
 	    <div>
 		<button onClick={this.toggleCanvas}> Toggle canvas</button>
 		
-		<button id="The uniform button" onClick={() => { if (!started) { randomUniformInterval([this.getLogs, this.setLogs], 30);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Uniform </button>
-		<button id="The gaussian button" onClick={() => { if (!started) { randomGaussianInterval([this.getLogs, this.setLogs]);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Gaussian </button>
+		<button id="The uniform button" onClick={() => { if (!started) { randomUniformInterval([this.getLogs, this.setLogs], intervalNumber);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Uniform </button>
+		<button id="The gaussian button" onClick={() => { if (!started) { randomGaussianInterval([this.getLogs, this.setLogs], intervalNumber);  this.setStarted(true) }}} color={started ? "red" : "black" } size="100px">Gaussian </button>
+		<input id="intervalNumber" value={intervalNumber !== 0 ? intervalNumber : ''} onChange={this.handleChange} type='number' placeholder='Enter a number of interval per hour'/>
 		<canvas id="canvas" height="30px" width="1000vw"> </canvas>
 		{
 		    logs.map((duration, index) => {
